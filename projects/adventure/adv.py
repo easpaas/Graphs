@@ -11,11 +11,11 @@ from ast import Str, literal_eval
 world = World()
 
 # You may uncomment the smaller graphs for development and testing purposes.
-# map_file = "maps/test_line.txt"
+map_file = "maps/test_line.txt"
 # map_file = "maps/test_cross.txt"
 # map_file = "maps/test_loop.txt"
 # map_file = "maps/test_loop_fork.txt"
-map_file = "maps/main_maze.txt"
+# map_file = "maps/main_maze.txt"
 
 # Loads the map into a dictionary
 room_graph=literal_eval(open(map_file, "r").read())
@@ -29,6 +29,8 @@ player = Player(world.starting_room)
 opposite_direction = {"n": "s", "s": "n", "e": "w", "w": "e"}
 visited = set()
 
+# Traversal function that explores each room 
+# at least once
 def recursive_traverse():
     moves = []
     for cur_direction in player.current_room.get_exits():
@@ -38,6 +40,7 @@ def recursive_traverse():
         else:
             visited.add(player.current_room)
             moves.append(cur_direction)
+            # copy the current path with current move
             moves.extend(recursive_traverse())
             player.travel(opposite_direction[cur_direction])
             moves.append(opposite_direction[cur_direction])
