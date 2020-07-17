@@ -4,7 +4,8 @@ from world import World
 from util import Stack
 
 import random
-from ast import literal_eval
+import collections
+from ast import Str, literal_eval
 
 # Load world
 world = World()
@@ -25,44 +26,24 @@ world.print_rooms()
 
 player = Player(world.starting_room)
 
-traversal_path = []
-traversal_graph = {}
-
+opposite_direction = {"n": "s", "s": "n", "e": "w", "w": "e"}
 visited = set()
-stack = Stack()
 
-# Add starting room to stack
-stack.push([player.current_room])
+def recursive_traverse():
+    moves = []
+    for cur_direction in player.current_room.get_exits():
+        player.travel(cur_direction)
+        if player.current_room in visited:
+            player.travel(opposite_direction[cur_direction])
+        else:
+            visited.add(player.current_room)
+            moves.append(cur_direction)
+            moves.extend(recursive_traverse())
+            player.travel(opposite_direction[cur_direction])
+            moves.append(opposite_direction[cur_direction])
+    return moves
 
-while stack.size() > 0:
-    cur_path = stack.pop()
-    room = cur_path[-1]
-
-    if room not in visited:
-        # mark room as visisted
-        visited.add(room)
-
-        # populate known rooms into a dictionary
-        traversal_graph[room.id] = {"n": "?", "s": "?", "e": "?", "w": "?"}
-
-        # loop through room's exists
-        for exit in room.get_exits():
-            # check if the current exit has a valid room
-            if room.get_room_in_direction(exit) == None:
-                traversal_graph[room.id][exit] = None
-            else:
-                # find the next room
-                next_room = room.get_room_in_direction(exit)
-
-                if next_room in visited:
-                    continue
-                # add this direction to the traversal path
-                traversal_path.append(exit)
-                # add the next room at current exit to dictionary
-                traversal_graph[room.id][exit] = next_room.id
-                # copy the current path and add the next room
-                copy_path = [*cur_path, next_room]
-                stack.push(copy_path)
+traversal_path = recursive_traverse()
 
 
 # # TRAVERSAL TEST
@@ -77,9 +58,9 @@ else:
     print(f"{len(room_graph) - len(visited)} unvisited rooms")
 
 
-#######
+######
 # UNCOMMENT TO WALK AROUND
-#######
+######
 # player.current_room.print_room_description(player)
 # while True:
 #     cmds = input("-> ").lower().split(" ")
