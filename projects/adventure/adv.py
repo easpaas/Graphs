@@ -1,20 +1,21 @@
 from room import Room
 from player import Player
 from world import World
+from util import Stack
 
 import random
-from ast import literal_eval
+import collections
+from ast import Str, literal_eval
 
 # Load world
 world = World()
 
-
 # You may uncomment the smaller graphs for development and testing purposes.
-# map_file = "maps/test_line.txt"
+map_file = "maps/test_line.txt"
 # map_file = "maps/test_cross.txt"
 # map_file = "maps/test_loop.txt"
 # map_file = "maps/test_loop_fork.txt"
-map_file = "maps/main_maze.txt"
+# map_file = "maps/main_maze.txt"
 
 # Loads the map into a dictionary
 room_graph=literal_eval(open(map_file, "r").read())
@@ -25,38 +26,50 @@ world.print_rooms()
 
 player = Player(world.starting_room)
 
-# Fill this out with directions to walk
-# traversal_path = ['n', 'n']
-traversal_path = []
+opposite_direction = {"n": "s", "s": "n", "e": "w", "w": "e"}
+visited = set()
+
+# Traversal function that explores each room 
+# at least once
+def recursive_traverse():
+    moves = []
+    for cur_direction in player.current_room.get_exits():
+        player.travel(cur_direction)
+        if player.current_room in visited:
+            player.travel(opposite_direction[cur_direction])
+        else:
+            visited.add(player.current_room)
+            moves.append(cur_direction)
+            # copy the current path with current move
+            moves.extend(recursive_traverse())
+            player.travel(opposite_direction[cur_direction])
+            moves.append(opposite_direction[cur_direction])
+    return moves
+
+traversal_path = recursive_traverse()
 
 
-
-# TRAVERSAL TEST
-visited_rooms = set()
-player.current_room = world.starting_room
-visited_rooms.add(player.current_room)
-
+# # TRAVERSAL TEST
 for move in traversal_path:
     player.travel(move)
-    visited_rooms.add(player.current_room)
+    visited.add(player.current_room)
 
-if len(visited_rooms) == len(room_graph):
-    print(f"TESTS PASSED: {len(traversal_path)} moves, {len(visited_rooms)} rooms visited")
+if len(visited) == len(room_graph):
+    print(f"TESTS PASSED: {len(traversal_path)} moves, {len(visited)} rooms visited")
 else:
     print("TESTS FAILED: INCOMPLETE TRAVERSAL")
-    print(f"{len(room_graph) - len(visited_rooms)} unvisited rooms")
+    print(f"{len(room_graph) - len(visited)} unvisited rooms")
 
 
-
-#######
+######
 # UNCOMMENT TO WALK AROUND
-#######
-player.current_room.print_room_description(player)
-while True:
-    cmds = input("-> ").lower().split(" ")
-    if cmds[0] in ["n", "s", "e", "w"]:
-        player.travel(cmds[0], True)
-    elif cmds[0] == "q":
-        break
-    else:
-        print("I did not understand that command.")
+######
+# player.current_room.print_room_description(player)
+# while True:
+#     cmds = input("-> ").lower().split(" ")
+#     if cmds[0] in ["n", "s", "e", "w"]:
+#         player.travel(cmds[0], True)
+#     elif cmds[0] == "q":
+#         break
+#     else:
+#         print("I did not understand that command.")

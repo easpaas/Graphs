@@ -1,3 +1,7 @@
+import random
+from random import randint
+import collections
+
 class User:
     def __init__(self, name):
         self.name = name
@@ -45,8 +49,21 @@ class SocialGraph:
         # !!!! IMPLEMENT ME
 
         # Add users
+        for i in range(num_users):
+            self.add_user(f"User {i}")
 
         # Create friendships
+        total_friendships = num_users * avg_friendships
+
+        added_friendships = 0
+
+        while added_friendships < total_friendships:
+            user_id_1 = randint(1, self.last_id)
+            user_id_2 = randint(1, self.last_id)
+
+            if user_id_1 != user_id_2 and user_id_2 not in self.friendships[user_id_1]:
+                self.add_friendship(user_id_1, user_id_2)
+                added_friendships += 2
 
     def get_all_social_paths(self, user_id):
         """
@@ -58,7 +75,41 @@ class SocialGraph:
         The key is the friend's ID and the value is the path.
         """
         visited = {}  # Note that this is a dictionary, not a set
-        # !!!! IMPLEMENT ME
+        
+
+        path_queue = collections.deque()
+
+        path_queue.append([user_id])
+
+        while len(path_queue) > 0:
+            path = path_queue.popleft()
+            friend_id = path[-1]
+
+            if friend_id in visited:
+                continue
+
+            visited[friend_id] = path
+
+            #Enqueue friends
+            for id in self.friendships[friend_id]:
+                new_path = path.copy()
+                new_path.append(id)
+                path_queue.append(new_path)
+
+        friend_coverage = (len(visited) - 1) / (len(self.users) - 1)
+        print(f"Percentage of users that are in extended network: {friend_coverage * 100: 0.1f}%")
+
+        # Figure average of path lengths to get average degrees of separation (subtract one to not count user)
+        total_length = 0
+        for path in visited.values():
+            total_length += len(path) - 1
+
+        if len(visited) > 1:
+            avg_separation = total_length / (len(visited) - 1)
+            print(f"Average degree of separation: {avg_separation}")
+        else:
+            print("No friends")
+
         return visited
 
 
